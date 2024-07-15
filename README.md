@@ -1,2 +1,2 @@
 # sw4mpd0nkey.github.io
-Public personal site
+<img title="lol i done goof'd" alt="Alt text" src="/assets/dumpsterfire.jpg">
