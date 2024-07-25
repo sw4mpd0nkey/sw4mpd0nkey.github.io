@@ -5,4 +5,4 @@
 layout: home
 ---
 
-<img title="lol i done goof'd" alt="Alt text" src="/assets/dumpsterfire.jpg">
+<img title="lol i done goof'd" alt="Alt text" src="/assets/img/dumpsterfire.jpg">

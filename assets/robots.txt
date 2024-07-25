@@ -1,0 +1,8 @@
+---
+permalink: /robots.txt
+# settings for web crawlers
+---
+
+User-agent: *
+Disallow: /norobots/
+Sitemap: {{ '/sitemap.xml' | absolute_url }}
