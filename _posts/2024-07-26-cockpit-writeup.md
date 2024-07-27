@@ -2,7 +2,7 @@
 layout: post
 title:  "Write Up: Proving Grounds Practice - Cockpit"
 date:   2024-07-26 21:30:31 -0400
-categories: oscp proving-grounds
+categories: oscp proving-grounds TJNull
 ---
 
 

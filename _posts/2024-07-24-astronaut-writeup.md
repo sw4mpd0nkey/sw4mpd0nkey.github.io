@@ -2,7 +2,7 @@
 layout: post
 title:  "Write Up: Proving Grounds Practice - Astronaut"
 date:   2024-07-24 19:40:31 -0400
-categories: oscp proving-grounds
+categories: oscp proving-grounds TJNull
 ---
 
 
